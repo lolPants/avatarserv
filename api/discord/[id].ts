@@ -1,6 +1,7 @@
 import { NowRequest, NowResponse } from '@vercel/node'
 import nc from 'next-connect'
 import fetch from 'node-fetch'
+import { cors } from '../../lib/cors'
 import { DISCORD_TOKEN } from '../../lib/env'
 import { resolveQuery as rq } from '../../lib/utils'
 
@@ -11,8 +12,9 @@ interface IUser {
   discriminator: string
 }
 
-const handler = nc<NowRequest, NowResponse>().get(
-  async (request: NowRequest, resp: NowResponse) => {
+const handler = nc<NowRequest, NowResponse>()
+  .use(cors)
+  .get(async (request: NowRequest, resp: NowResponse) => {
     const id = rq(request.query.id)
 
     const url = `https://discord.com/api/v8/users/${id}`
@@ -32,7 +34,6 @@ const handler = nc<NowRequest, NowResponse>().get(
 
     resp.setHeader('Location', avatarURL)
     return resp.status(307).end()
-  }
-)
+  })
 
 export default handler
