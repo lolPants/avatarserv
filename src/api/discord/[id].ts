@@ -3,6 +3,7 @@ import nc from 'next-connect'
 import fetch from 'node-fetch'
 import { cors } from '../../lib/cors'
 import { DISCORD_TOKEN } from '../../lib/env'
+import { time } from '../../lib/timing'
 import { resolveQuery as rq } from '../../lib/utils'
 
 interface IUser {
@@ -20,7 +21,10 @@ const handler = nc<NowRequest, NowResponse>()
     const url = `https://discord.com/api/v8/users/${id}`
     const headers = { Authorization: `Bot ${DISCORD_TOKEN}` }
 
+    const timer = time('lookup')
     const response = await fetch(url, { headers })
+    timer.end(resp)
+
     if (response.status === 404) return resp.status(404).end()
     if (response.ok === false) return resp.status(502).end()
 

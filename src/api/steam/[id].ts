@@ -3,6 +3,7 @@ import nc from 'next-connect'
 import fetch from 'node-fetch'
 import { cors } from '../../lib/cors'
 import { STEAM_KEY } from '../../lib/env'
+import { time } from '../../lib/timing'
 import { resolveQuery as rq } from '../../lib/utils'
 
 const BASE_URL =
@@ -26,7 +27,10 @@ const handler = nc<NowRequest, NowResponse>()
     const id = rq(request.query.id)
     const url = `${BASE_URL}?key=${STEAM_KEY}&steamids=${id}`
 
+    const timer = time('lookup')
     const response = await fetch(url)
+    timer.end(resp)
+
     if (response.ok === false) return resp.status(502).end()
 
     const { response: body }: IBody = await response.json()
