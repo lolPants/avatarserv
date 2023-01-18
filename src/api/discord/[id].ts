@@ -1,43 +1,58 @@
+import { API } from '@discordjs/core'
+import type { ImageSize } from '@discordjs/rest'
+import { ALLOWED_EXTENSIONS, REST } from '@discordjs/rest'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { StatusCodes } from 'http-status-codes'
 import nc from 'next-connect'
-import fetch from 'node-fetch'
+import { z } from 'zod'
 import { cors } from '../../lib/cors'
 import { DISCORD_TOKEN } from '../../lib/env'
-import { time } from '../../lib/timing'
-import { resolveQuery as rq } from '../../lib/utils'
+import { ALLOWED_SIZES_STRING } from '../../lib/utils'
 
-interface IUser {
-  id: string
-  username: string
-  avatar: string
-  discriminator: string
+const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN)
+const client = new API(rest)
+
+type Query = z.infer<typeof QuerySchema>
+const QuerySchema = z.object({
+  id: z.string().min(1),
+  format: z.enum(ALLOWED_EXTENSIONS).default('png'),
+  size: z
+    .enum(ALLOWED_SIZES_STRING)
+    .default('2048')
+    .transform(size => Number.parseInt(size, 10) as ImageSize),
+})
+
+const avatarURL: (query: Query) => Promise<string> = async ({
+  id,
+  format,
+  size,
+}) => {
+  const user = await client.users.get(id)
+  if (!user.avatar) {
+    const discriminator = Number.parseInt(user.discriminator, 10) % 5
+    return client.rest.cdn.defaultAvatar(discriminator)
+  }
+
+  return client.rest.cdn.avatar(user.id, user.avatar, {
+    size,
+    extension: format,
+  })
 }
 
 const handler = nc<VercelRequest, VercelResponse>()
-  .use(cors)
-  .get(async (req, resp) => {
-    const id = rq(req.query.id)
+handler.use(cors)
+handler.get(async (req, resp) => {
+  const result = await QuerySchema.safeParseAsync(req.query)
+  if (!result.success) {
+    resp.status(StatusCodes.BAD_REQUEST).send(result.error.errors)
+    return
+  }
 
-    const url = `https://discord.com/api/v8/users/${id}`
-    const headers = { Authorization: `Bot ${DISCORD_TOKEN}` }
+  const { data: query } = result
+  const url = await avatarURL(query)
 
-    const timer = time('lookup')
-    const response = await fetch(url, { headers })
-    timer.end(resp)
-
-    if (response.status === 404) return resp.status(404).end()
-    if (response.ok === false) return resp.status(502).end()
-
-    const user: IUser = await response.json()
-    const animated = user.avatar.startsWith('a_')
-
-    const format = rq(req.query.format) ?? (animated ? 'gif' : 'png')
-    const size = rq(req.query.size) ?? '2048'
-
-    const avatarURL = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${format}?size=${size}`
-
-    resp.setHeader('Location', avatarURL)
-    return resp.status(307).end()
-  })
+  resp.setHeader('Location', url)
+  resp.status(307).end()
+})
 
 export default handler

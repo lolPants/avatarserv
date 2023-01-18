@@ -15,7 +15,8 @@ export const cors: Middleware<VercelRequest, VercelResponse> = (
     )
 
     if (req.method === 'OPTIONS') {
-      return resp.status(200).end()
+      resp.status(200).end()
+      return
     }
   }
 

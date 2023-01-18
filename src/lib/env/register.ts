@@ -1,3 +1,5 @@
+import process from 'node:process'
+
 function _string(name: string, required?: false): string | undefined
 function _string(name: string, required: true): string
 function _string(name: string, required: boolean): string | undefined
@@ -25,14 +27,13 @@ function bool(name: string, required = false): boolean | undefined {
 
   const isTrue = trueValues.has(value.toLowerCase())
   const isFalse = falseValues.has(value.toLowerCase())
-  if (isTrue === false && isFalse === false) {
-    throw new TypeError(
-      `Invalid environment variable \`${name}\` : expected type \`bool\``,
-    )
-  }
 
   if (isTrue) return true
   if (isFalse) return false
+
+  throw new TypeError(
+    `Invalid environment variable \`${name}\` : expected type \`bool\``,
+  )
 }
 
 function int(name: string, required?: false): number | undefined

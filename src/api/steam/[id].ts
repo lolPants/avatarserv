@@ -1,42 +1,60 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import axios from 'axios'
+import Axios from 'axios'
+import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 import nc from 'next-connect'
+import { z } from 'zod'
 import { cors } from '../../lib/cors'
 import { STEAM_KEY } from '../../lib/env'
-import { time } from '../../lib/timing'
-import { resolveQuery as rq } from '../../lib/utils'
 
-const BASE_URL =
-  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002'
+const axios = Axios.create({
+  baseURL: 'http://api.steampowered.com',
+})
 
-interface IBody {
-  response: {
-    players: readonly IPlayer[]
-  }
-}
+const PlayerSchema = z.object({
+  steamid: z.string().min(1),
+  personaname: z.string(),
+  avatarfull: z.string().url(),
+})
 
-interface IPlayer {
-  steamid: string
-  personaname: string
-  avatarfull: string
-}
+const BodySchema = z.object({
+  response: z.object({
+    players: z.array(PlayerSchema),
+  }),
+})
+
+const QuerySchema = z.object({
+  id: z.string().min(1),
+})
 
 const handler = nc<VercelRequest, VercelResponse>()
-  .use(cors)
-  .get(async (req, resp) => {
-    const id = rq(req.query.id)
-    const url = `${BASE_URL}?key=${STEAM_KEY}&steamids=${id}`
+handler.use(cors)
+handler.get(async (req, resp) => {
+  const result = await QuerySchema.safeParseAsync(req.query)
+  if (!result.success) {
+    resp.status(StatusCodes.BAD_REQUEST).send(result.error.errors)
+    return
+  }
 
-    const timer = time('lookup')
-    const response = await axios(url)
-    timer.end(resp)
+  const { data: query } = result
+  const response = await axios.get<unknown>(
+    '/ISteamUser/GetPlayerSummaries/v0002',
+    {
+      params: { key: STEAM_KEY, steamids: query.id },
+    },
+  )
 
-    const { data } = resp
-    if (data.players.length === 0) return resp.status(404).end()
-    const [player] = data.players
+  const body = await BodySchema.parseAsync(response.data)
+  const [player] = body.response.players
 
-    resp.setHeader('Location', player.avatarfull)
-    return resp.status(307).end()
-  })
+  if (!player) {
+    resp.setHeader('Content-Type', 'text/plain')
+    resp.status(StatusCodes.NOT_FOUND).send(ReasonPhrases.NOT_FOUND)
+
+    return
+  }
+
+  resp.setHeader('Location', player.avatarfull)
+  resp.status(307).end()
+})
 
 export default handler
