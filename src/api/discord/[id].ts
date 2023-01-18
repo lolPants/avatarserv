@@ -5,9 +5,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { StatusCodes } from 'http-status-codes'
 import nc from 'next-connect'
 import { z } from 'zod'
-import { cors } from '../../lib/cors'
-import { DISCORD_TOKEN } from '../../lib/env'
-import { ALLOWED_SIZES_STRING } from '../../lib/utils'
+import { cors } from '../../lib/cors.js'
+import { DISCORD_TOKEN } from '../../lib/env/index.js'
+import { ALLOWED_SIZES_STRING } from '../../lib/utils.js'
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN)
 const client = new API(rest)

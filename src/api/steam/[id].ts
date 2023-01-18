@@ -3,8 +3,8 @@ import Axios from 'axios'
 import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 import nc from 'next-connect'
 import { z } from 'zod'
-import { cors } from '../../lib/cors'
-import { STEAM_KEY } from '../../lib/env'
+import { cors } from '../../lib/cors.js'
+import { STEAM_KEY } from '../../lib/env/index.js'
 
 const axios = Axios.create({
   baseURL: 'http://api.steampowered.com',

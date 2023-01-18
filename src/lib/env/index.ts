@@ -1,4 +1,4 @@
-import { registerString } from './register'
+import { registerString } from './register.js'
 
 // #region Globals
 const NODE_ENV = registerString('NODE_ENV')
