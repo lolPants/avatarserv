@@ -51,3 +51,5 @@ docs
 
 # Compiled TypeScript
 dist/
+
+.vercel

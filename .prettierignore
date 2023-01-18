@@ -1,0 +1,9 @@
+# Yarn
+.yarn/
+.yarnrc.yml
+
+# Vercel
+.vercel
+
+# Generated
+dist/
