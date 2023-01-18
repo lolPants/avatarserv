@@ -1,4 +1,4 @@
-import { NowRequest, NowResponse } from '@vercel/node'
+import type { NowRequest, NowResponse } from '@vercel/node'
 import nc from 'next-connect'
 import fetch from 'node-fetch'
 import { cors } from '../../lib/cors'

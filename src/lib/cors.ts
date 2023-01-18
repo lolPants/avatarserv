@@ -1,17 +1,17 @@
-import { NowRequest, NowResponse } from '@vercel/node'
-import { NextHandler } from 'next-connect'
+import type { NowRequest, NowResponse } from '@vercel/node'
+import type { NextHandler } from 'next-connect'
 
 export const cors = (
   request: NowRequest,
   resp: NowResponse,
-  next: NextHandler
+  next: NextHandler,
 ) => {
   if (request.headers.origin) {
     resp.setHeader('Access-Control-Allow-Origin', request.headers.origin)
     resp.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS')
     resp.setHeader(
       'Access-Control-Allow-Headers',
-      'Origin, X-Requested-With, Content-Type, Accept'
+      'Origin, X-Requested-With, Content-Type, Accept',
     )
 
     if (request.method === 'OPTIONS') {
@@ -19,5 +19,5 @@ export const cors = (
     }
   }
 
-  return next()
+  next()
 }

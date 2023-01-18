@@ -1,18 +1,18 @@
-import { NowResponse } from '@vercel/node'
+import type { NowResponse } from '@vercel/node'
 
-type Unit = 'milli' | 'micro' | 'nano'
+type Unit = 'micro' | 'milli' | 'nano'
 const now: (unit: Unit) => number = unit => {
   const hrTime = process.hrtime()
 
   switch (unit) {
     case 'milli':
-      return hrTime[0] * 1000 + hrTime[1] / 1000000
+      return hrTime[0] * 1_000 + hrTime[1] / 1_000_000
 
     case 'micro':
-      return hrTime[0] * 1000000 + hrTime[1] / 1000
+      return hrTime[0] * 1_000_000 + hrTime[1] / 1_000
 
     case 'nano':
-      return hrTime[0] * 1000000000 + hrTime[1]
+      return hrTime[0] * 1_000_000_000 + hrTime[1]
 
     default:
       return now('nano')
