@@ -1,6 +1,6 @@
-import type { NowRequest, NowResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import axios from 'axios'
 import nc from 'next-connect'
-import fetch from 'node-fetch'
 import { cors } from '../../lib/cors'
 import { STEAM_KEY } from '../../lib/env'
 import { time } from '../../lib/timing'
@@ -21,21 +21,19 @@ interface IPlayer {
   avatarfull: string
 }
 
-const handler = nc<NowRequest, NowResponse>()
+const handler = nc<VercelRequest, VercelResponse>()
   .use(cors)
-  .get(async (request: NowRequest, resp: NowResponse) => {
-    const id = rq(request.query.id)
+  .get(async (req, resp) => {
+    const id = rq(req.query.id)
     const url = `${BASE_URL}?key=${STEAM_KEY}&steamids=${id}`
 
     const timer = time('lookup')
-    const response = await fetch(url)
+    const response = await axios(url)
     timer.end(resp)
 
-    if (response.ok === false) return resp.status(502).end()
-
-    const { response: body }: IBody = await response.json()
-    if (body.players.length === 0) return resp.status(404).end()
-    const [player] = body.players
+    const { data } = resp
+    if (data.players.length === 0) return resp.status(404).end()
+    const [player] = data.players
 
     resp.setHeader('Location', player.avatarfull)
     return resp.status(307).end()

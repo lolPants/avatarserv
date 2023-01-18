@@ -1,4 +1,4 @@
-import type { NowRequest, NowResponse } from '@vercel/node'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import nc from 'next-connect'
 import fetch from 'node-fetch'
 import { cors } from '../../lib/cors'
@@ -13,10 +13,10 @@ interface IUser {
   discriminator: string
 }
 
-const handler = nc<NowRequest, NowResponse>()
+const handler = nc<VercelRequest, VercelResponse>()
   .use(cors)
-  .get(async (request: NowRequest, resp: NowResponse) => {
-    const id = rq(request.query.id)
+  .get(async (req, resp) => {
+    const id = rq(req.query.id)
 
     const url = `https://discord.com/api/v8/users/${id}`
     const headers = { Authorization: `Bot ${DISCORD_TOKEN}` }
@@ -31,8 +31,8 @@ const handler = nc<NowRequest, NowResponse>()
     const user: IUser = await response.json()
     const animated = user.avatar.startsWith('a_')
 
-    const format = rq(request.query.format) ?? (animated ? 'gif' : 'png')
-    const size = rq(request.query.size) ?? '2048'
+    const format = rq(req.query.format) ?? (animated ? 'gif' : 'png')
+    const size = rq(req.query.size) ?? '2048'
 
     const avatarURL = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${format}?size=${size}`
 

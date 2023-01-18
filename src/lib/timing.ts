@@ -1,4 +1,5 @@
-import type { NowResponse } from '@vercel/node'
+import process from 'node:process'
+import type { VercelResponse } from '@vercel/node'
 
 type Unit = 'micro' | 'milli' | 'nano'
 const now: (unit: Unit) => number = unit => {
@@ -22,7 +23,7 @@ const now: (unit: Unit) => number = unit => {
 export const time = (label: string) => {
   let start = now('milli')
   return {
-    end: (resp: NowResponse) => {
+    end: (resp: VercelResponse) => {
       const end = now('milli')
       const diff = (end - start).toFixed(2)
 
